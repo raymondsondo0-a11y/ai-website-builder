@@ -27,37 +27,23 @@ repo = github_client.get_repo(GITHUB_REPO)
 
 SYSTEM_PROMPT = """
 You are an expert autonomous website developer.
-
-Understand the user's website-development request and produce complete website files.
-
-Examples:
-- Create a hotel website
-- Build a restaurant website
-- Add a booking page
-- Change the homepage
-- Add an admin dashboard
-- Make the website responsive
-- Add a contact form
-- Fix a page
-
-The project is hosted through GitHub and deployed automatically.
+Understand the user's website-development request and produce complete production-quality website files.
 Prefer HTML5, CSS3, JavaScript, Bootstrap when useful, and PHP when server-side functionality is required.
-Create production-quality, responsive code.
-
-IMPORTANT: Return ONLY valid JSON using this structure:
+If the user asks to modify an existing website, provide complete replacement content for files that need changing.
+Return ONLY valid JSON in this exact structure:
 {
   "message": "short explanation",
   "files": [
     {"path": "index.html", "content": "complete file content"}
   ]
 }
-
-Every file must contain COMPLETE content. Never use placeholders such as "put code here", "etc.", "...", or "same as above".
-If the user asks to modify an existing website, provide complete replacement content for the files that need changing.
+Never use placeholders such as "put code here", "etc.", "...", or "same as above".
 """
 
-@app.route("/", methods=["GET"])
+@app.route("/", methods=["GET", "POST"])
 def home():
+    if request.method == "POST":
+        return momo_webhook()
     return jsonify({
         "status": "online",
         "service": "AI Website Builder",
@@ -69,12 +55,10 @@ def health():
     return jsonify({"status": "healthy"})
 
 
-def send_whatsapp(recipient, message):
-    """Send a WhatsApp text message through Momo Business."""
+def send_whatsapp(recipient, message, reply_to_gateway_id=None):
     if not MOMO_API_KEY:
         logging.error("MOMO_API_KEY is not configured.")
         return False
-
     if not recipient or not message:
         return False
 
@@ -83,9 +67,10 @@ def send_whatsapp(recipient, message):
         "message": message,
         "message_type": "text"
     }
-
     if MOMO_SENDER_ID:
         payload["sender_id"] = MOMO_SENDER_ID
+    if reply_to_gateway_id:
+        payload["in_reply_to_gateway_id"] = str(reply_to_gateway_id)
 
     try:
         response = requests.post(
@@ -98,25 +83,16 @@ def send_whatsapp(recipient, message):
             json=payload,
             timeout=20
         )
-
-        logging.info(
-            "Momo outbound response: %s %s",
-            response.status_code,
-            response.text[:1000]
-        )
+        logging.info("Momo outbound response: %s %s", response.status_code, response.text[:1000])
         return response.ok
-
     except Exception:
         logging.exception("Failed to send WhatsApp message.")
         return False
 
 
 def verify_momo_signature(raw_body):
-    """Verify Momo X-Signature when MOMO_WEBHOOK_SECRET is configured."""
     if not MOMO_WEBHOOK_SECRET:
-        logging.warning(
-            "MOMO_WEBHOOK_SECRET is not configured; signature check skipped."
-        )
+        logging.warning("MOMO_WEBHOOK_SECRET is not configured; signature check skipped.")
         return True
 
     provided_signature = request.headers.get("X-Signature", "")
@@ -146,14 +122,12 @@ def generate_website(user_message):
     )
 
     content = response.choices[0].message.content.strip()
-
     if content.startswith("```json"):
         content = content[7:]
     if content.startswith("```"):
         content = content[3:]
     if content.endswith("```"):
         content = content[:-3]
-
     return json.loads(content.strip())
 
 
@@ -169,7 +143,6 @@ def write_file_to_github(path, content, commit_message):
         )
         logging.info("Updated file: %s", path)
         return "updated"
-
     except Exception:
         repo.create_file(
             path=path,
@@ -184,7 +157,6 @@ def write_file_to_github(path, content, commit_message):
 def build_website(user_message):
     result = generate_website(user_message)
     files = result.get("files", [])
-
     if not files:
         raise ValueError("AI did not return any files.")
 
@@ -194,16 +166,16 @@ def build_website(user_message):
     for file in files:
         path = file.get("path")
         content = file.get("content")
-
         if not path or content is None:
             continue
-        if path.startswith("/"):
-            raise ValueError("Invalid file path.")
-        if ".." in path.split("/"):
+        if path.startswith("/") or ".." in path.split("/"):
             raise ValueError("Unsafe file path.")
 
         status = write_file_to_github(path, content, commit_message)
         changed_files.append({"path": path, "status": status})
+
+    if not changed_files:
+        raise ValueError("AI returned no valid files.")
 
     return {
         "message": result.get("message", "Website updated successfully."),
@@ -212,18 +184,8 @@ def build_website(user_message):
 
 
 def process_website_request(user_message, recipient):
-    """Perform the long AI/GitHub task in the background."""
     try:
-        logging.info(
-            "Starting website build for %s: %s",
-            recipient,
-            user_message
-        )
-
-        send_whatsapp(
-            recipient,
-            "⚙️ Nimeanza kazi sasa. AI inaandika website, inaweka files GitHub na kuandaa deployment. Nitakujulisha ikikamilika."
-        )
+        logging.info("Starting website build for %s: %s", recipient, user_message)
 
         result = build_website(user_message)
         file_names = [item["path"] for item in result.get("files", [])]
@@ -239,15 +201,13 @@ def process_website_request(user_message, recipient):
             f"📝 {files_text}\n\n"
             "🚀 GitHub ime-update na deployment imeanza automatically."
         )
-
         logging.info("Website build completed successfully for %s", recipient)
 
     except Exception as error:
         logging.exception("Website build failed")
         send_whatsapp(
             recipient,
-            "❌ Kuna tatizo wakati wa kutengeneza website yako. "
-            "Nimegundua error na nimeisimamisha kwa usalama.\n\n"
+            "❌ Kuna tatizo wakati wa kutengeneza website yako.\n\n"
             f"Error: {str(error)[:500]}"
         )
 
@@ -270,17 +230,53 @@ def momo_webhook():
         event = data.get("event")
         direction = data.get("direction")
 
-        # Only process real incoming customer messages.
-        if event != "message.received" or direction == "outbound":
-            logging.info(
-                "Ignoring webhook event=%s direction=%s",
-                event,
-                direction
-            )
+        if event and event != "message.received":
+            logging.info("Ignoring webhook event=%s", event)
             return jsonify({"received": True}), 200
 
-        user_message = data.get("body")
-        sender = data.get("sender")
+        if direction == "outbound":
+            logging.info("Ignoring outbound message.")
+            return jsonify({"received": True}), 200
+
+        user_message = None
+        sender = None
+
+        message_object = data.get("message")
+        if isinstance(message_object, dict):
+            user_message = (
+                message_object.get("text")
+                or message_object.get("body")
+                or message_object.get("content")
+            )
+            sender = (
+                message_object.get("sender")
+                or message_object.get("from")
+                or message_object.get("phone")
+                or message_object.get("recipient")
+            )
+
+        if not user_message:
+            user_message = (
+                data.get("body")
+                or data.get("text")
+                or data.get("content")
+                or data.get("message_text")
+            )
+
+        if not sender:
+            sender = (
+                data.get("sender")
+                or data.get("from")
+                or data.get("phone")
+                or data.get("wa_id")
+            )
+
+        if isinstance(user_message, dict):
+            user_message = (
+                user_message.get("text")
+                or user_message.get("body")
+                or user_message.get("content")
+            )
 
         if not user_message:
             return jsonify({
@@ -294,21 +290,19 @@ def momo_webhook():
                 "error": "No sender found."
             }), 400
 
-        # Immediate reply so the customer knows the AI has started.
         send_whatsapp(
             sender,
-            "👋 Nimepokea request yako. Naianza sasa hivi — nitakutumia update nikimaliza."
+            "👋 Nimepokea request yako. Naianza sasa hivi — nitakutumia ujumbe nikimaliza."
         )
 
-        # Long-running work happens after the webhook is acknowledged.
         worker = threading.Thread(
             target=process_website_request,
-            args=(user_message, sender),
+            args=(str(user_message), str(sender)),
             daemon=True
         )
         worker.start()
 
-        return jsonify({"received": True}), 200
+        return jsonify({"received": True, "status": "processing"}), 200
 
     except Exception as error:
         logging.exception("Webhook processing failed")
