@@ -56,22 +56,38 @@ def write_file_to_github(path, content, commit_message):
         existing = repo.get_contents(path, ref=GITHUB_BRANCH)
         if isinstance(existing, list):
             raise ValueError(f"Path points to a directory, not a file: {path}")
-        repo.update_file(path=path, message=commit_message, content=str(content), sha=existing.sha, branch=GITHUB_BRANCH)
+        repo.update_file(
+            path=path,
+            message=commit_message,
+            content=str(content),
+            sha=existing.sha,
+            branch=GITHUB_BRANCH,
+        )
         logging.info("Updated GitHub file: %s", path)
         return "updated"
     except UnknownObjectException:
-        repo.create_file(path=path, message=commit_message, content=str(content), branch=GITHUB_BRANCH)
+        repo.create_file(
+            path=path,
+            message=commit_message,
+            content=str(content),
+            branch=GITHUB_BRANCH,
+        )
         logging.info("Created GitHub file: %s", path)
         return "created"
     except GithubException as error:
-        raise RuntimeError(f"GitHub error while writing {path}: {error.data if getattr(error, 'data', None) else str(error)}") from error
+        raise RuntimeError(
+            f"GitHub error while writing {path}: "
+            f"{error.data if getattr(error, 'data', None) else str(error)}"
+        ) from error
 
 
 def build_website_on_github(user_request, files):
     if not isinstance(files, list) or not files:
         raise ValueError("AI returned no website files.")
+
     commit_message = "AI Website Builder: " + user_request[:70].strip()
     changed_files = []
+
     for file in files:
         if not isinstance(file, dict):
             continue
@@ -79,10 +95,16 @@ def build_website_on_github(user_request, files):
         content = file.get("content")
         if not path or content is None:
             continue
+
         status = write_file_to_github(path, content, commit_message)
-        changed_files.append({"path": str(path).replace("\\", "/").lstrip("/"), "status": status})
+        changed_files.append({
+            "path": str(path).replace("\\", "/").lstrip("/"),
+            "status": status,
+        })
+
     if not changed_files:
         raise ValueError("AI returned no valid website files.")
+
     return changed_files
 
 
@@ -124,11 +146,17 @@ def clean_json_text(text):
 def generate_ai_reply(message):
     if not gemini_client:
         raise RuntimeError("GEMINI_API_KEY is not configured.")
+
     response = gemini_client.models.generate_content(
         model=GEMINI_MODEL,
         contents=message,
-        config=types.GenerateContentConfig(system_instruction=CUSTOMER_SYSTEM_PROMPT, temperature=0.4, max_output_tokens=800),
+        config=types.GenerateContentConfig(
+            system_instruction=CUSTOMER_SYSTEM_PROMPT,
+            temperature=0.4,
+            max_output_tokens=800,
+        ),
     )
+
     reply = (response.text or "").strip()
     if not reply:
         raise RuntimeError("Gemini returned an empty response.")
@@ -138,21 +166,34 @@ def generate_ai_reply(message):
 def generate_website(message):
     if not gemini_client:
         raise RuntimeError("GEMINI_API_KEY is not configured.")
+
     response = gemini_client.models.generate_content(
         model=GEMINI_MODEL,
-        contents=f"Build the website requested by this customer:\n\n{message}\n\nReturn the complete website files using the exact JSON structure in your system instructions.",
-        config=types.GenerateContentConfig(system_instruction=WEBSITE_SYSTEM_PROMPT, temperature=0.35, max_output_tokens=30000),
+        contents=(
+            "Build the website requested by this customer:\n\n"
+            f"{message}\n\n"
+            "Return the complete website files using the exact JSON structure in your system instructions."
+        ),
+        config=types.GenerateContentConfig(
+            system_instruction=WEBSITE_SYSTEM_PROMPT,
+            temperature=0.35,
+            max_output_tokens=30000,
+        ),
     )
+
     raw = clean_json_text(response.text)
     try:
         result = json.loads(raw)
     except json.JSONDecodeError as error:
         raise RuntimeError("AI returned invalid website JSON.") from error
+
     if not isinstance(result, dict):
         raise RuntimeError("AI website response is not a JSON object.")
+
     files = result.get("files")
     if not isinstance(files, list) or not files:
         raise RuntimeError("AI website response contains no files.")
+
     return str(result.get("reply") or "Website imeandaliwa.").strip(), files
 
 
@@ -173,29 +214,64 @@ def is_website_request(message):
 def send_momo_message(recipient, message):
     if not MOMO_API_TOKEN:
         raise RuntimeError("MOMO_API_TOKEN is not configured.")
-    payload = {"recipient": str(recipient), "message": str(message)[:4096], "message_type": "text"}
+
+    payload = {
+        "recipient": str(recipient),
+        "message": str(message)[:4096],
+        "message_type": "text",
+    }
+
     if MOMO_SENDER_ID:
         payload["sender_id"] = MOMO_SENDER_ID
-    headers = {"Authorization": f"Bearer {MOMO_API_TOKEN}", "Accept": "application/json", "Content-Type": "application/json"}
-    response = requests.post(MOMO_SEND_URL, headers=headers, json=payload, timeout=20)
-    logging.info("Momo send response: HTTP %s %s", response.status_code, response.text[:1000])
+
+    headers = {
+        "Authorization": f"Bearer {MOMO_API_TOKEN}",
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+    }
+
+    response = requests.post(
+        MOMO_SEND_URL,
+        headers=headers,
+        json=payload,
+        timeout=20,
+    )
+
+    logging.info(
+        "Momo send response: HTTP %s %s",
+        response.status_code,
+        response.text[:1000],
+    )
+
     if response.status_code not in (200, 201, 202):
-        raise RuntimeError(f"Momo send failed with HTTP {response.status_code}: {response.text[:1000]}")
+        raise RuntimeError(
+            f"Momo send failed with HTTP {response.status_code}: {response.text[:1000]}"
+        )
+
     return response.json() if response.content else {}
 
 
 def verify_momo_signature(raw_body):
     if not MOMO_WEBHOOK_SECRET:
         return True
+
     received = request.headers.get("X-Signature", "")
-    expected = hmac.new(MOMO_WEBHOOK_SECRET.encode("utf-8"), raw_body, hashlib.sha256).hexdigest()
+    expected = hmac.new(
+        MOMO_WEBHOOK_SECRET.encode("utf-8"),
+        raw_body,
+        hashlib.sha256,
+    ).hexdigest()
+
     return hmac.compare_digest(received.lower(), expected.lower())
 
 
 def send_acknowledgement(customer_number):
     """Send an immediate visible confirmation that the message reached our service."""
     try:
-        send_momo_message(customer_number, "✅ Nimekupokea. Nipo hai na nimesikia ujumbe wako. Naanza kuufanyia kazi sasa...")
+        send_momo_message(
+            customer_number,
+            "✅ Nimekupokea. Nipo hai na nimesikia ujumbe wako. Naanza kuufanyia kazi sasa...",
+        )
         logging.info("Acknowledgement sent to %s", customer_number)
     except Exception:
         logging.exception("Could not send acknowledgement to %s", customer_number)
@@ -204,8 +280,10 @@ def send_acknowledgement(customer_number):
 def process_message(data):
     customer_number = str(data.get("sender") or "").strip()
     customer_message = str(data.get("body") or "").strip()
+
     if not customer_number or not customer_message:
         return
+
     try:
         if is_website_request(customer_message):
             reply, files = generate_website(customer_message)
@@ -214,17 +292,105 @@ def process_message(data):
             send_momo_message(customer_number, reply)
             logging.info("Website build completed: %s", changed_files)
         else:
-            send_momo_message(customer_number, generate_ai_reply(customer_message))
+            reply = generate_ai_reply(customer_message)
+            send_momo_message(customer_number, reply)
+
     except Exception:
         logging.exception("Message processing failed")
         try:
-            send_momo_message(customer_number, "Samahani, kuna changamoto ya muda kwenye mfumo. Tafadhali jaribu tena baada ya muda mfupi.")
+            send_momo_message(
+                customer_number,
+                "Samahani, kuna changamoto ya muda kwenye mfumo. Tafadhali jaribu tena baada ya muda mfupi.",
+            )
         except Exception:
             logging.exception("Could not send error message.")
 
 
+def handle_momo_webhook():
+    """Process a Momo message.received request from either the official path or root compatibility path."""
+    raw_body = request.get_data()
+
+    if not verify_momo_signature(raw_body):
+        logging.warning("Rejected Momo webhook: invalid X-Signature")
+        return jsonify({"received": False, "error": "Invalid signature."}), 401
+
+    data = request.get_json(silent=True) or {}
+    logging.info("Momo webhook received: %s", data)
+
+    if not isinstance(data, dict):
+        return jsonify({"received": False, "error": "Invalid JSON payload."}), 400
+
+    if data.get("event") != "message.received":
+        return jsonify({
+            "received": True,
+            "status": "ignored",
+            "reason": "Not a message.received event.",
+        }), 200
+
+    if data.get("direction") and data.get("direction") != "inbound":
+        return jsonify({
+            "received": True,
+            "status": "ignored",
+            "reason": "Not an inbound message.",
+        }), 200
+
+    message_id = str(data.get("message_id") or "").strip()
+
+    if message_id:
+        with _processed_lock:
+            if message_id in _processed_message_ids:
+                logging.info("Duplicate Momo message ignored: %s", message_id)
+                return jsonify({
+                    "received": True,
+                    "status": "duplicate",
+                    "message_id": message_id,
+                }), 200
+
+            _processed_message_ids.add(message_id)
+
+            if len(_processed_message_ids) > 5000:
+                _processed_message_ids.clear()
+                _processed_message_ids.add(message_id)
+
+    customer_number = str(data.get("sender") or "").strip()
+    customer_message = str(data.get("body") or "").strip()
+
+    if not customer_number or not customer_message:
+        logging.warning("Momo message missing sender/body: %s", data)
+        return jsonify({
+            "received": True,
+            "status": "ignored",
+            "reason": "Missing sender or body.",
+        }), 200
+
+    # Acknowledge immediately and process the AI/website work independently.
+    threading.Thread(
+        target=send_acknowledgement,
+        args=(customer_number,),
+        daemon=True,
+    ).start()
+
+    threading.Thread(
+        target=process_message,
+        args=(data,),
+        daemon=True,
+    ).start()
+
+    return jsonify({
+        "received": True,
+        "status": "processing",
+        "message_id": message_id or None,
+        "acknowledgement": "scheduled",
+    }), 200
+
+
 @app.route("/", methods=["GET", "POST"])
 def home():
+    # Compatibility: if Momo is still configured with the domain root,
+    # accept message.received there too. The preferred URL remains /webhook/momo.
+    if request.method == "POST":
+        return handle_momo_webhook()
+
     return jsonify({
         "status": "online",
         "service": "AI Website Builder + Momo AI Bridge",
@@ -250,45 +416,9 @@ def health():
 
 
 @app.route("/webhook/momo", methods=["POST"])
+@app.route("/webhook/momo/", methods=["POST"])
 def momo_webhook():
-    raw_body = request.get_data()
-    if not verify_momo_signature(raw_body):
-        logging.warning("Rejected Momo webhook: invalid X-Signature")
-        return jsonify({"received": False, "error": "Invalid signature."}), 401
-
-    data = request.get_json(silent=True) or {}
-    logging.info("Momo webhook received: %s", data)
-
-    if data.get("event") != "message.received":
-        return jsonify({"received": True, "status": "ignored", "reason": "Not a message.received event."}), 200
-    if data.get("direction") and data.get("direction") != "inbound":
-        return jsonify({"received": True, "status": "ignored", "reason": "Not an inbound message."}), 200
-
-    message_id = str(data.get("message_id") or "").strip()
-    if message_id:
-        with _processed_lock:
-            if message_id in _processed_message_ids:
-                return jsonify({"received": True, "status": "duplicate", "message_id": message_id}), 200
-            _processed_message_ids.add(message_id)
-            if len(_processed_message_ids) > 5000:
-                _processed_message_ids.clear()
-                _processed_message_ids.add(message_id)
-
-    customer_number = str(data.get("sender") or "").strip()
-    customer_message = str(data.get("body") or "").strip()
-    if not customer_number or not customer_message:
-        return jsonify({"received": True, "status": "ignored", "reason": "Missing sender or body."}), 200
-
-    # Send a visible acknowledgement immediately, then process AI/website work separately.
-    threading.Thread(target=send_acknowledgement, args=(customer_number,), daemon=True).start()
-    threading.Thread(target=process_message, args=(data,), daemon=True).start()
-
-    return jsonify({
-        "received": True,
-        "status": "processing",
-        "message_id": message_id or None,
-        "acknowledgement": "scheduled",
-    }), 200
+    return handle_momo_webhook()
 
 
 @app.route("/build", methods=["POST"])
@@ -297,17 +427,37 @@ def build():
         data = request.get_json(silent=True)
         if not isinstance(data, dict):
             return jsonify({"ok": False, "error": "Invalid JSON body."}), 400
+
         user_message = str(data.get("message") or "").strip()
         files = data.get("files")
+
         if not isinstance(files, list) or not files:
             if not user_message:
-                return jsonify({"ok": False, "error": "Send either files or a website message."}), 400
+                return jsonify({
+                    "ok": False,
+                    "error": "Send either files or a website message.",
+                }), 400
             _, files = generate_website(user_message)
-        changed_files = build_website_on_github(user_message or "Website update", files)
-        return jsonify({"ok": True, "message": "Website files were written to GitHub successfully.", "files": changed_files, "github_repo": GITHUB_REPO, "branch": GITHUB_BRANCH}), 200
+
+        changed_files = build_website_on_github(
+            user_message or "Website update",
+            files,
+        )
+
+        return jsonify({
+            "ok": True,
+            "message": "Website files were written to GitHub successfully.",
+            "files": changed_files,
+            "github_repo": GITHUB_REPO,
+            "branch": GITHUB_BRANCH,
+        }), 200
+
     except Exception as error:
         logging.exception("Direct website build failed")
-        return jsonify({"ok": False, "error": str(error)[:1500]}), 500
+        return jsonify({
+            "ok": False,
+            "error": str(error)[:1500],
+        }), 500
 
 
 if __name__ == "__main__":
