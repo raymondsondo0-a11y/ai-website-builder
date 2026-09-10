@@ -192,6 +192,15 @@ def verify_momo_signature(raw_body):
     return hmac.compare_digest(received.lower(), expected.lower())
 
 
+def send_acknowledgement(customer_number):
+    """Send an immediate visible confirmation that the message reached our service."""
+    try:
+        send_momo_message(customer_number, "✅ Nimekupokea. Nipo hai na nimesikia ujumbe wako. Naanza kuufanyia kazi sasa...")
+        logging.info("Acknowledgement sent to %s", customer_number)
+    except Exception:
+        logging.exception("Could not send acknowledgement to %s", customer_number)
+
+
 def process_message(data):
     customer_number = str(data.get("sender") or "").strip()
     customer_message = str(data.get("body") or "").strip()
@@ -265,8 +274,21 @@ def momo_webhook():
                 _processed_message_ids.clear()
                 _processed_message_ids.add(message_id)
 
+    customer_number = str(data.get("sender") or "").strip()
+    customer_message = str(data.get("body") or "").strip()
+    if not customer_number or not customer_message:
+        return jsonify({"received": True, "status": "ignored", "reason": "Missing sender or body."}), 200
+
+    # Send a visible acknowledgement immediately, then process AI/website work separately.
+    threading.Thread(target=send_acknowledgement, args=(customer_number,), daemon=True).start()
     threading.Thread(target=process_message, args=(data,), daemon=True).start()
-    return jsonify({"received": True, "status": "processing", "message_id": message_id or None}), 200
+
+    return jsonify({
+        "received": True,
+        "status": "processing",
+        "message_id": message_id or None,
+        "acknowledgement": "scheduled",
+    }), 200
 
 
 @app.route("/build", methods=["POST"])
