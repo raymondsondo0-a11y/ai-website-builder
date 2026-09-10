@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Student marks management and reporting system">
+  <title>Markwise | Student Marks Management</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><span class="brand-mark">M</span><span>Markwise</span></div>
+    <p class="side-label">MAIN MENU</p>
+    <nav aria-label="Main navigation">
+      <a href="#dashboard" class="nav-link active" data-page="dashboard"><span>⌂</span> Dashboard</a>
+      <a href="#students" class="nav-link" data-page="students"><span>♙</span> Students</a>
+      <a href="#marks" class="nav-link" data-page="marks"><span>✎</span> Enter Marks</a>
+      <a href="#reports" class="nav-link" data-page="reports"><span>▤</span> Reports</a>
+    </nav>
+    <div class="sidebar-bottom"><div class="school-badge">SD</div><div><strong>Sunrise Academy</strong><small>Administrator</small></div></div>
+  </aside>
+  <main class="main-content">
+    <header class="topbar">
+      <button class="menu-btn" id="menuBtn" aria-label="Open navigation">☰</button>
+      <div><p class="eyebrow">ACADEMIC MANAGEMENT</p><h1 id="pageTitle">Dashboard</h1></div>
+      <div class="top-actions"><span class="term-pill">2024 / 2025 · Term 2</span><button class="avatar" aria-label="User profile">AD</button></div>
+    </header>
+
+    <section class="page active-page" id="dashboardPage">
+      <div class="welcome"><div><p class="eyebrow">WELCOME BACK, ADMIN</p><h2>Track performance with confidence.</h2><p class="muted">Manage marks, compare classes, and create polished reports in one place.</p></div><button class="button light" data-go="marks">＋ Enter new marks</button></div>
+      <div class="stat-grid">
+        <article class="stat-card"><div class="stat-icon purple">♙</div><div><span>Total Students</span><strong id="studentCount">0</strong><small>Registered learners</small></div></article>
+        <article class="stat-card"><div class="stat-icon blue">▣</div><div><span>Marks Recorded</span><strong id="marksCount">0</strong><small>Subject entries</small></div></article>
+        <article class="stat-card"><div class="stat-icon green">↗</div><div><span>School Average</span><strong id="schoolAverage">0%</strong><small>Across all students</small></div></article>
+        <article class="stat-card"><div class="stat-icon orange">★</div><div><span>Top Performer</span><strong id="topStudent">—</strong><small id="topScore">No results yet</small></div></article>
+      </div>
+      <div class="two-col"><section class="panel"><div class="panel-head"><div><h3>Recent performance</h3><p class="muted">Latest student results</p></div><button class="text-btn" data-go="reports">View reports →</button></div><div class="table-wrap"><table><thead><tr><th>Student</th><th>Class</th><th>Average</th><th>Grade</th></tr></thead><tbody id="recentTable"></tbody></table></div></section><section class="panel quick-panel"><h3>Quick actions</h3><p class="muted">Common tasks for your school office</p><button class="action-card" data-go="students"><b class="action-icon">♙</b><span><strong>Add student</strong><small>Register a new learner</small></span><b>→</b></button><button class="action-card" data-go="marks"><b class="action-icon">✎</b><span><strong>Record marks</strong><small>Enter subject scores</small></span><b>→</b></button><button class="action-card" data-go="reports"><b class="action-icon">▤</b><span><strong>Create report</strong><small>View and print results</small></span><b>→</b></button></section></div>
+    </section>
+
+    <section class="page" id="studentsPage">
+      <div class="page-heading"><div><p class="eyebrow">SCHOOL REGISTER</p><h2>Student directory</h2><p class="muted">Add and manage learners by class level.</p></div><button class="button primary" id="addStudentBtn">＋ Add student</button></div>
+      <section class="panel"><div class="toolbar"><input class="search" id="studentSearch" type="search" placeholder="Search by name or admission number..."><select id="classFilter"><option value="all">All classes</option></select></div><div class="table-wrap"><table><thead><tr><th>Student</th><th>Admission No.</th><th>Class level</th><th>Gender</th><th>Actions</th></tr></thead><tbody id="studentsTable"></tbody></table></div></section>
+    </section>
+
+    <section class="page" id="marksPage">
+      <div class="page-heading"><div><p class="eyebrow">ASSESSMENT ENTRY</p><h2>Enter student marks</h2><p class="muted">Scores are recorded out of 100 for each subject.</p></div></div>
+      <section class="panel form-panel"><form id="marksForm"><div class="form-grid"><label>Student<select id="markStudent" required><option value="">Select student</option></select></label><label>Assessment<select id="assessment"><option>Term 2 Examination</option><option>Term 2 Continuous Assessment</option><option>Mid-Term Test</option></select></label></div><div class="subject-grid" id="subjectInputs"></div><div class="form-actions"><button type="reset" class="button ghost">Clear form</button><button class="button primary" type="submit">Save marks</button></div></form></section>
+      <section class="panel"><div class="panel-head"><div><h3>Recorded marks</h3><p class="muted">Existing subject entries</p></div><button class="text-btn" id="exportBtn">Download CSV</button></div><div class="table-wrap"><table><thead><tr><th>Student</th><th>Class</th><th>Subjects recorded</th><th>Average</th><th>Updated</th></tr></thead><tbody id="marksTable"></tbody></table></div></section>
+    </section>
+
+    <section class="page" id="reportsPage">
+      <div class="page-heading"><div><p class="eyebrow">ACADEMIC RESULTS</p><h2>Reports & rankings</h2><p class="muted">Compare performance at class and school level.</p></div><button class="button primary" id="printBtn">⎙ Print report</button></div>
+      <div class="report-select"><label>Generate final report for <select id="reportStudent"><option value="">Select a student</option></select></label></div>
+      <section class="report-card" id="reportCard"><div class="report-empty">Select a student above to generate their final report.</div></section>
+      <div class="two-col rankings"><section class="panel"><div class="panel-head"><div><h3>Class ranking</h3><p class="muted">Grouped by class level</p></div></div><div class="table-wrap"><table><thead><tr><th>Rank</th><th>Student</th><th>Class</th><th>Average</th><th>Grade</th></tr></thead><tbody id="classRanking"></tbody></table></div></section><section class="panel"><div class="panel-head"><div><h3>School ranking</h3><p class="muted">Top performers across school</p></div></div><div class="table-wrap"><table><thead><tr><th>Rank</th><th>Student</th><th>Class</th><th>Average</th><th>Grade</th></tr></thead><tbody id="schoolRanking"></tbody></table></div></section></div>
+    </section>
+  </main>
+  <div class="modal" id="studentModal" aria-hidden="true"><div class="modal-box"><button class="close" id="closeModal" aria-label="Close">×</button><p class="eyebrow">STUDENT REGISTER</p><h2>Add new student</h2><form id="studentForm"><label>Full name<input id="studentName" required placeholder="e.g. Amina Hassan"></label><div class="form-grid"><label>Admission number<input id="admissionNo" required placeholder="ADM-001"></label><label>Class level<select id="studentClass"><option>Form 1</option><option>Form 2</option><option>Form 3</option><option>Form 4</option><option>Standard 5</option><option>Standard 6</option><option>Standard 7</option></select></label></div><label>Gender<select id="studentGender"><option>Female</option><option>Male</option><option>Other</option></select></label><div class="form-actions"><button type="button" class="button ghost" id="cancelModal">Cancel</button><button class="button primary">Save student</button></div></form></div></div>
+  <div class="toast" id="toast" role="status"></div>
+  <script src="script.js"></script>
+</body>
+</html>
