@@ -1,26 +1,28 @@
-const subjects=['Mathematics','English','Science','Social Studies','Kiswahili','Computer Studies'];
-let students=JSON.parse(localStorage.getItem('markwise_students')||'[]');
-let marks=JSON.parse(localStorage.getItem('markwise_marks')||'{}');
-const $=s=>document.querySelector(s), $$=s=>document.querySelectorAll(s);
-function save(){localStorage.setItem('markwise_students',JSON.stringify(students));localStorage.setItem('markwise_marks',JSON.stringify(marks))}
-function average(id){let vals=Object.values(marks[id]||{}).filter(v=>v!==''&&v!=null).map(Number);return vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:0}
-function grade(n){return n>=80?'A':n>=70?'B':n>=60?'C':n>=50?'D':'E'}
-function gradeClass(){return 'grade'}
-function student(id){return students.find(s=>s.id===id)}
-function ranked(){return students.map(s=>({...s,avg:average(s.id)})).sort((a,b)=>b.avg-a.avg)}
-function showToast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600)}
-function navigate(page){$$('.page').forEach(p=>p.classList.remove('active-page'));$(`#${page}Page`).classList.add('active-page');$$('.nav-link').forEach(a=>a.classList.toggle('active',a.dataset.page===page));$('#pageTitle').textContent=page==='marks'?'Enter Marks':page[0].toUpperCase()+page.slice(1);history.replaceState(null,'','#'+page);if(page==='reports')renderReports();if(page==='students')renderStudents();if(page==='marks')renderMarks()}
-$$('.nav-link').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();navigate(a.dataset.page);$('#sidebar').classList.remove('open')}));$$('[data-go]').forEach(b=>b.addEventListener('click',()=>navigate(b.dataset.go)));$('#menuBtn').addEventListener('click',()=>$('#sidebar').classList.toggle('open'));
-function renderSelects(){const opts=students.map(s=>`<option value="${s.id}">${s.name} · ${s.class}</option>`).join('');$('#markStudent').innerHTML='<option value="">Select student</option>'+opts;$('#reportStudent').innerHTML='<option value="">Select a student</option>'+opts;const classes=[...new Set(students.map(s=>s.class))].sort();$('#classFilter').innerHTML='<option value="all">All classes</option>'+classes.map(c=>`<option>${c}</option>`).join('')}
-function renderDashboard(){const rankedList=ranked();$('#studentCount').textContent=students.length;$('#marksCount').textContent=Object.values(marks).reduce((n,m)=>n+Object.keys(m).length,0);const av=students.length?students.reduce((n,s)=>n+average(s.id),0)/students.length:0;$('#schoolAverage').textContent=Math.round(av)+'%';$('#topStudent').textContent=rankedList[0]?.name||'—';$('#topScore').textContent=rankedList[0]?Math.round(rankedList[0].avg)+'% average':'No results yet';$('#recentTable').innerHTML=rankedList.slice(0,5).map(s=>`<tr><td><strong>${s.name}</strong></td><td>${s.class}</td><td>${Math.round(s.avg)}%</td><td><span class="${gradeClass()}">${grade(s.avg)}</span></td></tr>`).join('')||'<tr><td colspan="4" class="muted">No student records yet.</td></tr>'}
-function renderStudents(){renderSelects();const q=$('#studentSearch').value.toLowerCase(),f=$('#classFilter').value;const list=students.filter(s=>(s.name.toLowerCase().includes(q)||s.admission.toLowerCase().includes(q))&&(f==='all'||s.class===f));$('#studentsTable').innerHTML=list.map(s=>`<tr><td><strong>${s.name}</strong></td><td>${s.admission}</td><td>${s.class}</td><td>${s.gender}</td><td><button class="text-btn delete-student" data-id="${s.id}">Remove</button></td></tr>`).join('')||'<tr><td colspan="5" class="muted">No students found.</td></tr>';$$('.delete-student').forEach(b=>b.onclick=()=>{if(confirm('Remove this student and their marks?')){students=students.filter(s=>s.id!==b.dataset.id);delete marks[b.dataset.id];save();renderAll();showToast('Student removed')}})}
-function renderMarks(){renderSelects();$('#marksTable').innerHTML=students.filter(s=>marks[s.id]&&Object.keys(marks[s.id]).length).map(s=>`<tr><td><strong>${s.name}</strong></td><td>${s.class}</td><td>${Object.keys(marks[s.id]).length} / ${subjects.length}</td><td>${Math.round(average(s.id))}%</td><td>${new Date().toLocaleDateString()}</td></tr>`).join('')||'<tr><td colspan="5" class="muted">No marks recorded yet.</td></tr>'}
-function renderReports(){renderSelects();const list=ranked();const rows=list.map((s,i)=>`<tr><td>${i+1}</td><td><strong>${s.name}</strong></td><td>${s.class}</td><td>${Math.round(s.avg)}%</td><td><span class="grade">${grade(s.avg)}</span></td></tr>`).join('')||'<tr><td colspan="5" class="muted">No results available.</td></tr>';$('#schoolRanking').innerHTML=rows;$('#classRanking').innerHTML=rows}
-function renderReport(id){const s=student(id);if(!s){$('#reportCard').innerHTML='<div class="report-empty">Select a student above to generate their final report.</div>';return}const entries=subjects.map(sub=>`<tr><td>${sub}</td><td>${marks[id]?.[sub]??'—'}</td><td>${marks[id]?.[sub]!=null?grade(Number(marks[id][sub])):'—'}</td></tr>`).join('');const av=average(id);$('#reportCard').innerHTML=`<div class="report-inner"><div class="report-title"><div><p class="eyebrow">SUNRISE ACADEMY · FINAL REPORT</p><h3>${s.name}</h3><p class="muted">Admission: ${s.admission} · ${s.class} · ${s.gender}</p></div><div><strong>TERM 2</strong><p class="muted">2024 / 2025</p></div></div><table class="report-table"><thead><tr><th>Subject</th><th>Mark / 100</th><th>Grade</th></tr></thead><tbody>${entries}</tbody></table><div class="report-summary"><div><small class="muted">Overall average</small><strong>${Math.round(av)}%</strong></div><div><small class="muted">Overall grade</small><strong>${grade(av)}</strong></div><div><small class="muted">Class position</small><strong>${ranked().findIndex(x=>x.id===id)+1} / ${students.length}</strong></div></div></div>`}
-function renderAll(){renderDashboard();renderStudents();renderMarks();renderReports()}
-$('#subjectInputs').innerHTML=subjects.map(s=>`<label>${s}<input type="number" min="0" max="100" data-subject="${s}" placeholder="0–100"></label>`).join('');
-$('#studentForm').onsubmit=e=>{e.preventDefault();const s={id:'s'+Date.now(),name:$('#studentName').value.trim(),admission:$('#admissionNo').value.trim(),class:$('#studentClass').value,gender:$('#studentGender').value};students.push(s);save();e.target.reset();$('#studentModal').classList.remove('open');renderAll();showToast('Student added successfully')};
-$('#marksForm').onsubmit=e=>{e.preventDefault();const id=$('#markStudent').value;if(!id)return;marks[id]=marks[id]||{};$$('[data-subject]').forEach(i=>{if(i.value!=='')marks[id][i.dataset.subject]=Number(i.value)});save();e.target.reset();renderAll();showToast('Marks saved successfully')};
-$('#reportStudent').onchange=e=>renderReport(e.target.value);$('#studentSearch').oninput=renderStudents;$('#classFilter').onchange=renderStudents;$('#addStudentBtn').onclick=()=>$('#studentModal').classList.add('open');$('#closeModal').onclick=$('#cancelModal').onclick=()=>$('#studentModal').classList.remove('open');$('#printBtn').onclick=()=>window.print();
-$('#exportBtn').onclick=()=>{let csv='Student,Admission,Class,Subject,Mark\n';students.forEach(s=>subjects.forEach(sub=>{if(marks[s.id]?.[sub]!=null)csv+=`"${s.name}",${s.admission},${s.class},${sub},${marks[s.id][sub]}\n`}));const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='student-marks.csv';a.click()};
-renderAll();if(location.hash)navigate(location.hash.slice(1));
+document.addEventListener('DOMContentLoaded',()=>{
+  const filterButtons=document.querySelectorAll('.filter-btn');
+  const practicals=document.querySelectorAll('.practical-item');
+  filterButtons.forEach(button=>button.addEventListener('click',()=>{
+    filterButtons.forEach(item=>item.classList.remove('active')); button.classList.add('active');
+    const filter=button.dataset.filter;
+    practicals.forEach(card=>{card.style.display=filter==='all'||card.dataset.category===filter?'block':'none';});
+  }));
+  const addDrop=document.getElementById('addDrop'), reset=document.getElementById('resetLab'), select=document.getElementById('chemicalSelect');
+  const volumeRead=document.getElementById('volumeRead'), phRead=document.getElementById('phRead'), resultRead=document.getElementById('resultRead'), liquid=document.getElementById('simLiquid'), stage=document.querySelector('.beaker-stage'), state=document.getElementById('simState');
+  let volume=0, acid=0, base=0;
+  function update(){
+    const ph=Math.max(0,Math.min(14,7+(base-acid)*0.65));
+    volumeRead.textContent=volume+' mL'; phRead.textContent=ph.toFixed(1);
+    resultRead.textContent=ph<6.5?'Acidic':ph>7.5?'Basic':'Neutral';
+    resultRead.style.color=ph<6.5?'#f49aae':ph>7.5?'#78baff':'#73e5bd';
+    liquid.style.height=Math.min(82,35+volume*2.2)+'%'; liquid.style.backgroundColor=ph<6.5?'#e88ba9aa':ph>7.5?'#77aeeaaa':'#69c9dcbb';
+    state.textContent=volume===0?'READY':resultRead.textContent.toUpperCase();
+  }
+  addDrop.addEventListener('click',()=>{
+    volume+=10; select.value==='acid'?acid++:base++; update();
+    stage.classList.remove('reacting'); void stage.offsetWidth; stage.classList.add('reacting');
+    setTimeout(()=>stage.classList.remove('reacting'),900);
+  });
+  reset.addEventListener('click',()=>{volume=0;acid=0;base=0;update();});
+  update();
+  document.querySelectorAll('.nav-link,.navbar-brand,.nav-cta').forEach(link=>link.addEventListener('click',()=>{const nav=document.getElementById('mainNav');if(nav.classList.contains('show')) bootstrap.Collapse.getOrCreateInstance(nav).hide();}));
+});
