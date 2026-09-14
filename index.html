@@ -1,65 +1,85 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Student marks management and reporting system">
-  <title>Markwise | Student Marks Management</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="ChemLab Practicals - interactive chemistry laboratory practicals, experiments and safety learning.">
+  <title>ChemLab Practicals | Interactive Chemistry Lab</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <aside class="sidebar" id="sidebar">
-    <div class="brand"><span class="brand-mark">M</span><span>Markwise</span></div>
-    <p class="side-label">MAIN MENU</p>
-    <nav aria-label="Main navigation">
-      <a href="#dashboard" class="nav-link active" data-page="dashboard"><span>⌂</span> Dashboard</a>
-      <a href="#students" class="nav-link" data-page="students"><span>♙</span> Students</a>
-      <a href="#marks" class="nav-link" data-page="marks"><span>✎</span> Enter Marks</a>
-      <a href="#reports" class="nav-link" data-page="reports"><span>▤</span> Reports</a>
-    </nav>
-    <div class="sidebar-bottom"><div class="school-badge">SD</div><div><strong>Sunrise Academy</strong><small>Administrator</small></div></div>
-  </aside>
-  <main class="main-content">
-    <header class="topbar">
-      <button class="menu-btn" id="menuBtn" aria-label="Open navigation">☰</button>
-      <div><p class="eyebrow">ACADEMIC MANAGEMENT</p><h1 id="pageTitle">Dashboard</h1></div>
-      <div class="top-actions"><span class="term-pill">2024 / 2025 · Term 2</span><button class="avatar" aria-label="User profile">AD</button></div>
-    </header>
-
-    <section class="page active-page" id="dashboardPage">
-      <div class="welcome"><div><p class="eyebrow">WELCOME BACK, ADMIN</p><h2>Track performance with confidence.</h2><p class="muted">Manage marks, compare classes, and create polished reports in one place.</p></div><button class="button light" data-go="marks">＋ Enter new marks</button></div>
-      <div class="stat-grid">
-        <article class="stat-card"><div class="stat-icon purple">♙</div><div><span>Total Students</span><strong id="studentCount">0</strong><small>Registered learners</small></div></article>
-        <article class="stat-card"><div class="stat-icon blue">▣</div><div><span>Marks Recorded</span><strong id="marksCount">0</strong><small>Subject entries</small></div></article>
-        <article class="stat-card"><div class="stat-icon green">↗</div><div><span>School Average</span><strong id="schoolAverage">0%</strong><small>Across all students</small></div></article>
-        <article class="stat-card"><div class="stat-icon orange">★</div><div><span>Top Performer</span><strong id="topStudent">—</strong><small id="topScore">No results yet</small></div></article>
+  <nav class="navbar navbar-expand-lg fixed-top">
+    <div class="container">
+      <a class="navbar-brand" href="#home"><span class="brand-mark">⚗</span> Chem<span>Lab</span></a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
+      <div class="collapse navbar-collapse" id="mainNav">
+        <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-3">
+          <li class="nav-item"><a class="nav-link" href="#practicals">Practicals</a></li>
+          <li class="nav-item"><a class="nav-link" href="#simulator">Simulator</a></li>
+          <li class="nav-item"><a class="nav-link" href="#safety">Safety first</a></li>
+          <li class="nav-item"><a class="btn btn-primary nav-cta" href="#start">Start learning <span>→</span></a></li>
+        </ul>
       </div>
-      <div class="two-col"><section class="panel"><div class="panel-head"><div><h3>Recent performance</h3><p class="muted">Latest student results</p></div><button class="text-btn" data-go="reports">View reports →</button></div><div class="table-wrap"><table><thead><tr><th>Student</th><th>Class</th><th>Average</th><th>Grade</th></tr></thead><tbody id="recentTable"></tbody></table></div></section><section class="panel quick-panel"><h3>Quick actions</h3><p class="muted">Common tasks for your school office</p><button class="action-card" data-go="students"><b class="action-icon">♙</b><span><strong>Add student</strong><small>Register a new learner</small></span><b>→</b></button><button class="action-card" data-go="marks"><b class="action-icon">✎</b><span><strong>Record marks</strong><small>Enter subject scores</small></span><b>→</b></button><button class="action-card" data-go="reports"><b class="action-icon">▤</b><span><strong>Create report</strong><small>View and print results</small></span><b>→</b></button></section></div>
+    </div>
+  </nav>
+
+  <main>
+    <section id="home" class="hero-section">
+      <div class="container position-relative">
+        <div class="row align-items-center g-5">
+          <div class="col-lg-6">
+            <div class="eyebrow"><i></i> DIGITAL CHEMISTRY LABORATORY</div>
+            <h1>Discover the <em>science</em> in every reaction.</h1>
+            <p class="hero-copy">Learn chemistry by doing. Explore guided practicals, observe real reactions, and build confidence in the laboratory — safely.</p>
+            <div class="hero-actions d-flex flex-wrap gap-3">
+              <a href="#practicals" class="btn btn-primary btn-lg">Explore practicals <span>→</span></a>
+              <a href="#simulator" class="btn btn-outline-light btn-lg">Try a simulation <span>◌</span></a>
+            </div>
+            <div class="trust-row"><span>✓ Guided steps</span><span>✓ Safety-led</span><span>✓ Beginner friendly</span></div>
+          </div>
+          <div class="col-lg-6 hero-visual" aria-label="Animated laboratory illustration">
+            <div class="orb orb-one"></div><div class="orb orb-two"></div>
+            <div class="lab-card">
+              <div class="lab-top"><span><b></b><b></b><b></b></span><small>reaction_lab.exe</small><span class="live-dot">● LIVE</span></div>
+              <div class="bench">
+                <div class="flask flask-large"><div class="liquid blue-liquid"></div><div class="bubble b1"></div><div class="bubble b2"></div><div class="bubble b3"></div></div>
+                <div class="tube"><div class="tube-liquid pink-liquid"></div><div class="tube-bubble"></div></div>
+                <div class="bottle bottle-yellow"><div class="bottle-cap"></div><div class="bottle-neck"></div><div class="bottle-body"><span>NaOH</span></div></div>
+                <div class="bottle bottle-cyan"><div class="bottle-cap"></div><div class="bottle-neck"></div><div class="bottle-body"><span>HCl</span></div></div>
+                <div class="spark s1">✦</div><div class="spark s2">✧</div><div class="spark s3">✦</div>
+              </div>
+              <div class="lab-status"><span class="status-check">✓</span><span>Neutralisation reaction detected</span><strong>pH 7.0</strong></div>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
 
-    <section class="page" id="studentsPage">
-      <div class="page-heading"><div><p class="eyebrow">SCHOOL REGISTER</p><h2>Student directory</h2><p class="muted">Add and manage learners by class level.</p></div><button class="button primary" id="addStudentBtn">＋ Add student</button></div>
-      <section class="panel"><div class="toolbar"><input class="search" id="studentSearch" type="search" placeholder="Search by name or admission number..."><select id="classFilter"><option value="all">All classes</option></select></div><div class="table-wrap"><table><thead><tr><th>Student</th><th>Admission No.</th><th>Class level</th><th>Gender</th><th>Actions</th></tr></thead><tbody id="studentsTable"></tbody></table></div></section>
+    <section class="stats-strip"><div class="container"><div class="row g-4 text-center"><div class="col-6 col-md-3"><strong>12+</strong><span>Practical lessons</span></div><div class="col-6 col-md-3"><strong>30</strong><span>Interactive reactions</span></div><div class="col-6 col-md-3"><strong>100%</strong><span>Safety focused</span></div><div class="col-6 col-md-3"><strong>∞</strong><span>Curiosity encouraged</span></div></div></div></section>
+
+    <section id="practicals" class="section-padding light-section">
+      <div class="container">
+        <div class="section-heading d-flex flex-wrap justify-content-between align-items-end gap-3"><div><div class="eyebrow dark"><i></i> LEARN BY DOING</div><h2>Popular practicals</h2></div><p>Choose a practical and follow the science<br class="d-none d-md-block"> from setup to conclusion.</p></div>
+        <div class="filter-bar"><button class="filter-btn active" data-filter="all">All practicals</button><button class="filter-btn" data-filter="foundations">Foundations</button><button class="filter-btn" data-filter="reactions">Reactions</button><button class="filter-btn" data-filter="analysis">Analysis</button></div>
+        <div class="row g-4" id="practicalGrid">
+          <div class="col-md-6 col-lg-4 practical-item" data-category="foundations"><article class="practical-card"><div class="card-art art-blue"><span class="number">01</span><div class="card-flask">⚗</div><span class="art-label">FOUNDATIONS</span></div><div class="card-body"><h3>Measuring pH</h3><p>Use indicators to identify acids, bases and neutral solutions.</p><div class="card-footer"><span>◷ 20 min</span><a href="#simulator">Open lesson →</a></div></div></article></div>
+          <div class="col-md-6 col-lg-4 practical-item" data-category="reactions"><article class="practical-card"><div class="card-art art-orange"><span class="number">02</span><div class="card-flask bubbles-art">⚗</div><span class="art-label">REACTIONS</span></div><div class="card-body"><h3>Acid + Base</h3><p>Watch neutralisation in action and balance the reaction equation.</p><div class="card-footer"><span>◷ 25 min</span><a href="#simulator">Open lesson →</a></div></div></article></div>
+          <div class="col-md-6 col-lg-4 practical-item" data-category="analysis"><article class="practical-card"><div class="card-art art-purple"><span class="number">03</span><div class="card-flask">◉</div><span class="art-label">ANALYSIS</span></div><div class="card-body"><h3>Flame tests</h3><p>Identify metal ions by the characteristic colours they emit.</p><div class="card-footer"><span>◷ 30 min</span><a href="#safety">View guide →</a></div></div></article></div>
+        </div>
+      </div>
     </section>
 
-    <section class="page" id="marksPage">
-      <div class="page-heading"><div><p class="eyebrow">ASSESSMENT ENTRY</p><h2>Enter student marks</h2><p class="muted">Scores are recorded out of 100 for each subject.</p></div></div>
-      <section class="panel form-panel"><form id="marksForm"><div class="form-grid"><label>Student<select id="markStudent" required><option value="">Select student</option></select></label><label>Assessment<select id="assessment"><option>Term 2 Examination</option><option>Term 2 Continuous Assessment</option><option>Mid-Term Test</option></select></label></div><div class="subject-grid" id="subjectInputs"></div><div class="form-actions"><button type="reset" class="button ghost">Clear form</button><button class="button primary" type="submit">Save marks</button></div></form></section>
-      <section class="panel"><div class="panel-head"><div><h3>Recorded marks</h3><p class="muted">Existing subject entries</p></div><button class="text-btn" id="exportBtn">Download CSV</button></div><div class="table-wrap"><table><thead><tr><th>Student</th><th>Class</th><th>Subjects recorded</th><th>Average</th><th>Updated</th></tr></thead><tbody id="marksTable"></tbody></table></div></section>
-    </section>
+    <section id="simulator" class="section-padding simulator-section"><div class="container"><div class="row align-items-center g-5"><div class="col-lg-5"><div class="eyebrow"><i></i> INTERACTIVE LAB</div><h2>Run a reaction.<br><em>See what happens.</em></h2><p class="section-copy">Add drops of acid and base to the beaker and observe how the pH changes. This safe virtual experiment models neutralisation.</p><div class="reaction-controls"><label for="chemicalSelect">Choose a solution</label><select id="chemicalSelect" class="form-select"><option value="acid">Hydrochloric acid (HCl)</option><option value="base">Sodium hydroxide (NaOH)</option></select><button id="addDrop" class="btn btn-primary w-100">Add 10 mL drop <span>＋</span></button><button id="resetLab" class="btn btn-link w-100">Reset experiment</button></div></div><div class="col-lg-7"><div class="simulator-card"><div class="sim-header"><span>VIRTUAL BEAKER</span><span id="simState" class="sim-state">READY</span></div><div class="beaker-stage"><div id="beaker" class="beaker"><div id="simLiquid" class="sim-liquid"></div><div class="sim-bubble one"></div><div class="sim-bubble two"></div><div class="sim-bubble three"></div></div><div class="dropper"><div class="dropper-top"></div><div class="dropper-glass"></div><div class="falling-drop"></div></div><div class="reaction-star">✦</div></div><div class="sim-reading"><div><small>VOLUME</small><strong id="volumeRead">0 mL</strong></div><div><small>pH LEVEL</small><strong id="phRead">7.0</strong></div><div><small>RESULT</small><strong id="resultRead">Neutral</strong></div></div><div class="ph-scale"><span>ACIDIC</span><div class="scale-gradient"></div><div class="scale-numbers"><span>0</span><span>3</span><span>7</span><span>10</span><span>14</span></div><span>BASIC</span></div></div></div></div></div></section>
 
-    <section class="page" id="reportsPage">
-      <div class="page-heading"><div><p class="eyebrow">ACADEMIC RESULTS</p><h2>Reports & rankings</h2><p class="muted">Compare performance at class and school level.</p></div><button class="button primary" id="printBtn">⎙ Print report</button></div>
-      <div class="report-select"><label>Generate final report for <select id="reportStudent"><option value="">Select a student</option></select></label></div>
-      <section class="report-card" id="reportCard"><div class="report-empty">Select a student above to generate their final report.</div></section>
-      <div class="two-col rankings"><section class="panel"><div class="panel-head"><div><h3>Class ranking</h3><p class="muted">Grouped by class level</p></div></div><div class="table-wrap"><table><thead><tr><th>Rank</th><th>Student</th><th>Class</th><th>Average</th><th>Grade</th></tr></thead><tbody id="classRanking"></tbody></table></div></section><section class="panel"><div class="panel-head"><div><h3>School ranking</h3><p class="muted">Top performers across school</p></div></div><div class="table-wrap"><table><thead><tr><th>Rank</th><th>Student</th><th>Class</th><th>Average</th><th>Grade</th></tr></thead><tbody id="schoolRanking"></tbody></table></div></section></div>
-    </section>
+    <section id="safety" class="safety-section"><div class="container"><div class="row align-items-center g-5"><div class="col-lg-7"><div class="eyebrow dark"><i></i> BEFORE YOU BEGIN</div><h2>Good science starts<br>with <em>good safety.</em></h2><p class="section-copy">Always prepare your workspace and understand the hazards before handling any chemical.</p><div class="safety-list"><div><span>01</span><p><strong>Protect yourself</strong><br>Wear goggles, gloves and a lab coat.</p></div><div><span>02</span><p><strong>Read the label</strong><br>Know every chemical before you use it.</p></div><div><span>03</span><p><strong>Never taste or touch</strong><br>Use tools, not your hands, for samples.</p></div></div></div><div class="col-lg-5"><div class="safety-panel"><div class="shield">♢</div><h3>Safety checklist</h3><p>Ready for your practical?</p><label><input type="checkbox"> Goggles and gloves on</label><label><input type="checkbox"> Work area is clear</label><label><input type="checkbox"> Teacher / supervisor present</label><a href="#start" class="btn btn-dark w-100 mt-3">Start safely →</a></div></div></div></div></section>
+    <section id="start" class="final-cta"><div class="container text-center"><div class="eyebrow justify-content-center"><i></i> YOUR LAB JOURNEY STARTS HERE</div><h2>Curiosity is your<br><em>best instrument.</em></h2><a href="#practicals" class="btn btn-primary btn-lg">Browse all practicals →</a></div></section>
   </main>
-  <div class="modal" id="studentModal" aria-hidden="true"><div class="modal-box"><button class="close" id="closeModal" aria-label="Close">×</button><p class="eyebrow">STUDENT REGISTER</p><h2>Add new student</h2><form id="studentForm"><label>Full name<input id="studentName" required placeholder="e.g. Amina Hassan"></label><div class="form-grid"><label>Admission number<input id="admissionNo" required placeholder="ADM-001"></label><label>Class level<select id="studentClass"><option>Form 1</option><option>Form 2</option><option>Form 3</option><option>Form 4</option><option>Standard 5</option><option>Standard 6</option><option>Standard 7</option></select></label></div><label>Gender<select id="studentGender"><option>Female</option><option>Male</option><option>Other</option></select></label><div class="form-actions"><button type="button" class="button ghost" id="cancelModal">Cancel</button><button class="button primary">Save student</button></div></form></div></div>
-  <div class="toast" id="toast" role="status"></div>
+  <footer><div class="container d-flex flex-wrap justify-content-between align-items-center gap-3"><a class="navbar-brand" href="#home"><span class="brand-mark">⚗</span> Chem<span>Lab</span></a><p>Learn. Experiment. Understand.</p><small>© 2024 ChemLab Practicals</small></div></footer>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
