@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: raymond-ai-command-engine
+    runtime: python
+    rootDir: engine
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: DASHBOARD_TOKEN
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-4.1-mini
+      - key: FTP_HOST
+        sync: false
+      - key: FTP_USER
+        sync: false
+      - key: FTP_PASSWORD
+        sync: false
+      - key: FTP_REMOTE_DIR
+        value: /htdocs
