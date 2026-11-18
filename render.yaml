@@ -2,22 +2,25 @@ services:
   - type: web
     name: raymond-ai-command-engine
     runtime: python
-    rootDir: engine
     buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    startCommand: gunicorn --workers 1 --threads 4 --timeout 120 --bind 0.0.0.0:$PORT app:app
     healthCheckPath: /health
     envVars:
       - key: OPENAI_API_KEY
         sync: false
-      - key: DASHBOARD_TOKEN
-        sync: false
       - key: OPENAI_MODEL
-        value: gpt-4.1-mini
-      - key: FTP_HOST
+        value: gpt-5.6
+      - key: GITHUB_TOKEN
         sync: false
-      - key: FTP_USER
+      - key: GITHUB_REPO
+        value: raymondsondo0-a11y/ai-website-builder
+      - key: GITHUB_BRANCH
+        value: main
+      - key: MOMO_API_TOKEN
         sync: false
-      - key: FTP_PASSWORD
+      - key: MOMO_SENDER_ID
         sync: false
-      - key: FTP_REMOTE_DIR
-        value: /htdocs
+      - key: MOMO_WEBHOOK_SECRET
+        sync: false
+      - key: MOMO_SEND_URL
+        value: https://business.momo.tz/api/v3/whatsapp/send
